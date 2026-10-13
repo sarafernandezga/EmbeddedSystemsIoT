@@ -109,4 +109,86 @@ The following table describes the hardware connections used by the application.
 | RGB LED | Green | PC1 | Controls green channel |
 | RGB LED | Blue | PC2 | Controls blue channel |
 
+## 5. Implementation Status and Code Description
+
+This section describes the implemented software modules, explains how they work, and tracks the development progress of the application.
+
+### 5.1. RGB LED Control Module (`rgb.c` / `rgb.h`)
+
+**Status: Implemented as a standalone module. Integration with the complete application is pending.**
+
+The RGB LED control module manages the RGB LED using three GPIO outputs, one for each color channel: red, green, and blue. It runs in a dedicated Zephyr thread and receives LED commands through a message queue.
+
+This module was originally developed by me for a previous project involving a humidity sensor and has been reused for the current application.
+
+#### Thread Architecture
+
+The module defines a dedicated thread using `K_THREAD_DEFINE()`. The thread executes the `my_thread_rgb()` function and is responsible for initializing the LED GPIOs, receiving messages, and updating the LED output.
+
+The thread uses a message queue to receive commands from other software modules. This separates LED control from the application logic and allows other threads to request a color change without directly manipulating the GPIO pins.
+
+#### Message Queue
+
+The message queue is named `rgb_q` and is defined in `rgb.c`. It has a capacity of one message, so it can hold one pending LED command.
+
+The queue transfers messages using the following structure, defined in `rgb.h`:
+
+```c
+struct rgb_mode {
+    uint32_t mode;
+    int32_t period_ms;
+};
+```
+
+The structure contains two fields:
+
+- **`mode`**: Specifies the requested LED color using one of the predefined color constants.
+- **`period_ms`**: Specifies the time interval in milliseconds used by the thread when waiting for a new message. When no new message arrives during this interval and the period is positive, the selected LED channels are toggled to produce blinking behavior.
+
+The queue is declared in the header file using:
+
+```c
+extern struct k_msgq rgb_q;
+```
+
+This declaration allows other source files to access the queue and send LED commands using Zephyr's message queue API, such as `k_msgq_put()`.
+
+#### Supported Colors
+
+The header file defines six color modes:
+
+| Constant | LED Output |
+|---|---|
+| `BLUE_LED` | Blue |
+| `RED_LED` | Red |
+| `GREEN_LED` | Green |
+| `YELLOW_LED` | Red + Green |
+| `PURPLE_LED` | Red + Blue |
+| `CIAN_LED` | Green + Blue |
+
+The requested color is selected using the `mode` field of the received message. The `set_color()` function first turns off all three LED channels and then activates the GPIO outputs corresponding to the requested color.
+
+The `toggle_color()` function toggles the channels associated with the selected color, allowing the LED to blink when the configured period is positive and no new message arrives before the timeout.
+
+#### GPIO Initialization
+
+The module obtains the GPIO specifications for the RGB channels through the Zephyr devicetree aliases `rgbblue`, `rgbred`, and `rgbgreen`.
+
+Before using each channel, `initialize_RGB()` checks that the GPIO device is ready and configures the pin as an output. This ensures that the LED channels are initialized before the thread starts processing commands.
+
+#### Communication with Other Modules
+
+Other threads can request an LED behavior by sending a `struct rgb_mode` message to `rgb_q`. 
+
+### 5.2. Light Control Module (`adc.c` / `adc.h`)
+
+**Status: Not implemented
+
+### 5.3. B2 Button Control Module (`button.c` / `button.h`)
+
+**Status: Not implemented
+
+### 5.4. Mode Manager (`mode_manager.c` / `mode_manager.h`)
+
+**Status: Not implemented
 
