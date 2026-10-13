@@ -45,12 +45,12 @@ The extra functionality introduces a third operating mode: **OFF**.
 
 The basic state machine contains two states: NORMAL and BLUE.
 
-```mermaid
-stateDiagram-v2
-    [*] --> NORMAL
-    NORMAL --> BLUE : Short press B2
-    BLUE --> NORMAL : Short press B2
-```
+<img width="3676" height="2088" alt="state_machine_embedded drawio(1)" src="https://github.com/user-attachments/assets/c08a847f-7bec-4e98-8d6c-804b4cf41cf3" />
+
+<br>
+<br>
+<br>
+<br>
 
 **State behavior:**
 
