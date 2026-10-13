@@ -1,0 +1,22 @@
+{
+  "terminal.integrated.env.windows": {
+    "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr",
+
+    "ZEPHYR_SDK_INSTALL_DIR": "C:/Users/josemanuel/zephyr-sdk-1.0.1",
+
+    "ZEPHYR_BASE": "C:/Users/josemanuel/zephyrproject/zephyr",
+
+    "ZEPHYR_DIR": "C:/Users/josemanuel/zephyrproject",
+
+    "PROJECT_DIR": "C:/Users/josemanuel/Desktop/Universidad/Master/Embedded/light_control"
+  },
+
+  "cortex-debug.armToolchainPath":
+    "C:/Users/josemanuel/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin",
+
+  "cortex-debug.armToolchainPrefix":
+    "arm-zephyr-eabi",
+
+  "cortex-debug.gdbPath":
+    "C:/Users/josemanuel/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb.exe"
+}
