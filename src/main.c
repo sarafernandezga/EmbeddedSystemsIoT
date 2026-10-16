@@ -13,7 +13,7 @@ int main(void)
     // Creamos la configuración a comprobar
     struct rgb_mode inicial = {
         .mode = RED_LED,      // Color rojo
-        .period_ms = 500      // Parpadeo cada 500ms
+    
     };
 
     // Enviamos el mensaje a la cola 'rgb_q' definida en rgb.c

@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 /* Leds Modes */
+#define OFF_LED       0x00
 #define BLUE_LED      0X01
 #define RED_LED       0x02
 #define GREEN_LED     0X03
@@ -16,14 +17,9 @@
 /* Leds structure */
 struct rgb_mode {
     uint32_t mode;
-    int32_t period_ms;
 };
 
 /* Message variable */
 extern struct k_msgq rgb_q;
-
-/* Functions */
-void start_rgb(void);
-
 
 #endif

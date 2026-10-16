@@ -108,7 +108,7 @@ The following table describes the hardware connections used by the application.
 | RGB LED | Red | PB5 | Controls red channel |
 | RGB LED | Green | PC1 | Controls green channel |
 | RGB LED | Blue | PC2 | Controls blue channel |
-| LDR | ADC | PB1 | Analog imput / Measures light intensity |
+| KY-018 LDR  | ADC | PB1 | Analog imput / Measures light intensity |
 
 ## 5. Implementation Status and Code Description
 
@@ -185,7 +185,10 @@ Other threads can request an LED behavior by sending a `struct rgb_mode` message
 
 **Status: Partially implemented**
 
-Initializes ADC and read raw data from LDR.
+Initializes ADC, read raw data from LDR and converts it into percentage. 
+
+0% -> Dark
+100 % -> Bright
 
 ### 5.3. B2 Button Control Module (`button.c` / `button.h`)
 

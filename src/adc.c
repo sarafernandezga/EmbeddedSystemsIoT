@@ -36,7 +36,24 @@ static int initialize_adc(struct adc_sequence *sequence)
         return ret;
     }
 
-    return 0;
+    return ret;
+}
+
+static int take_measurement(struct adc_sequence *sequence){
+    int ret = adc_read_dt(&adc_ch, sequence);
+
+    if (ret == 0) {
+
+        int percentage = 100 - ((int)sample * 100 / 4095);
+
+        printk("ADC: raw = %d / percentage = %d %%\n", (int)sample, percentage);
+
+    } else {
+        printk("ADC: error de lectura: %d\n", ret);
+
+    }
+
+    return ret;
 }
 
 /* Thread ADC */
@@ -55,13 +72,7 @@ void my_thread_adc(void *p1, void *p2, void *p3)
 
     while (1) {
 
-        ret = adc_read_dt(&adc_ch, &sequence);
-
-        if (ret == 0) {
-            printk("ADC: raw = %d\n", (int)sample);
-        } else {
-            printk("ADC: error de lectura: %d\n", ret);
-        }
+        ret = take_measurement(&sequence);
 
         k_msleep(2000);
     }

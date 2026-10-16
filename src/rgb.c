@@ -14,7 +14,6 @@ static const struct gpio_dt_spec rgb_green = GPIO_DT_SPEC_GET(DT_ALIAS(rgbgreen)
 
 /* Functions */
 static void set_color(struct rgb_mode mrgb);
-static void toggle_color(struct rgb_mode mrgb);
 
 /* Initialize leds */
 static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
@@ -42,13 +41,12 @@ void my_thread_rgb(void *p1, void *p2, void *p3){
 
     while (1) {
 
-         if (k_msgq_get(&rgb_q, &mrgb, K_MSEC(mrgb.period_ms)) == 0) {
-            set_color(mrgb);
+        if (k_msgq_get(&rgb_q, &mrgb, K_FOREVER) == 0) {
+                set_color(mrgb);
 
-        } else if (mrgb.period_ms > 0){
-            toggle_color(mrgb);
+        } else{
+            printk("Error: Reading message queue");
         }
-
     }
 }
 
@@ -81,34 +79,9 @@ static void set_color(struct rgb_mode mrgb)
     else if (mrgb.mode == CIAN_LED) {
         gpio_pin_set_dt(&rgb_blue, 1);
         gpio_pin_set_dt(&rgb_green, 1);
-    }
+    } 
 }
 
-/* Toggle the corresponding led */
-static void toggle_color(struct rgb_mode mrgb)
-{
-    if (mrgb.mode == BLUE_LED) {
-        gpio_pin_toggle_dt(&rgb_blue);
-    }
-    else if (mrgb.mode == GREEN_LED) {
-        gpio_pin_toggle_dt(&rgb_green);
-    }
-    else if (mrgb.mode == RED_LED) {
-        gpio_pin_toggle_dt(&rgb_red);
-    }
-    else if (mrgb.mode == YELLOW_LED) {
-        gpio_pin_toggle_dt(&rgb_red);
-        gpio_pin_toggle_dt(&rgb_green);
-
-    } else if (mrgb.mode == PURPLE_LED) {
-        gpio_pin_toggle_dt(&rgb_red);
-        gpio_pin_toggle_dt(&rgb_blue);
-    }
-    else if (mrgb.mode == CIAN_LED) {
-        gpio_pin_toggle_dt(&rgb_blue);
-        gpio_pin_toggle_dt(&rgb_green);
-    }
-}
     
 
 /* Crear el thread */
