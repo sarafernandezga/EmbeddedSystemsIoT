@@ -183,12 +183,14 @@ Other threads can request an LED behavior by sending a `struct rgb_mode` message
 
 ### 5.2. Light Control Module (`adc.c` / `adc.h`)
 
-**Status: Partially implemented**
+**Status: Implemented as a standalone module. Integration with the complete application is pending.**
 
 Initializes ADC, read raw data from LDR and converts it into percentage. 
 
 0% -> Dark
 100 % -> Bright
+
+The message queue extracts the raw and percentage values ​​for processing.
 
 ### 5.3. B2 Button Control Module (`button.c` / `button.h`)
 

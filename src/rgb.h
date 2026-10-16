@@ -14,11 +14,6 @@
 #define CIAN_LED      0X06
 
 
-/* Leds structure */
-struct rgb_mode {
-    uint32_t mode;
-};
-
 /* Message variable */
 extern struct k_msgq rgb_q;
 

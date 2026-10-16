@@ -6,14 +6,15 @@
 #include <errno.h>
 
 /* ADC Variables */
-
 #define ADC_NODE DT_PATH(zephyr_user)
 
 static const struct adc_dt_spec adc_ch =
     ADC_DT_SPEC_GET_BY_IDX(ADC_NODE, 0);
-    
 
 static int16_t sample;
+
+/* Message Queue */
+K_MSGQ_DEFINE_TYPE(adc_q, struct adc_m , 1);
 
 static int initialize_adc(struct adc_sequence *sequence)
 {
@@ -42,12 +43,17 @@ static int initialize_adc(struct adc_sequence *sequence)
 static int take_measurement(struct adc_sequence *sequence){
     int ret = adc_read_dt(&adc_ch, sequence);
 
+    struct adc_m madc = {
+        .raw = (int)sample,
+        .percentage = percentage
+    };
+
     if (ret == 0) {
 
         int percentage = 100 - ((int)sample * 100 / 4095);
 
-        printk("ADC: raw = %d / percentage = %d %%\n", (int)sample, percentage);
-
+        k_msgq_put(&adc_q, &madc, K_NO_WAIT);
+        
     } else {
         printk("ADC: error de lectura: %d\n", ret);
 

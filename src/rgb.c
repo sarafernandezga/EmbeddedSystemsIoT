@@ -5,7 +5,7 @@
 #include <zephyr/sys/printk.h>
 
 /* Message Queue */
-K_MSGQ_DEFINE_TYPE(rgb_q, struct rgb_mode , 1);
+K_MSGQ_DEFINE_TYPE(rgb_q, sizeof(uint32_t), 1);
 
 /* Leds Variables */
 static const struct gpio_dt_spec rgb_blue = GPIO_DT_SPEC_GET(DT_ALIAS(rgbblue), gpios);
@@ -13,7 +13,7 @@ static const struct gpio_dt_spec rgb_red = GPIO_DT_SPEC_GET(DT_ALIAS(rgbred), gp
 static const struct gpio_dt_spec rgb_green = GPIO_DT_SPEC_GET(DT_ALIAS(rgbgreen), gpios);
 
 /* Functions */
-static void set_color(struct rgb_mode mrgb);
+static void set_color(uint32_t mode);
 
 /* Initialize leds */
 static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
@@ -33,7 +33,7 @@ static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
 
 /* Thread leds */
 void my_thread_rgb(void *p1, void *p2, void *p3){
-    static struct rgb_mode mrgb;
+    static uint32_t mode;
 
     initialize_RGB(&rgb_blue);
     initialize_RGB(&rgb_red);
@@ -41,8 +41,8 @@ void my_thread_rgb(void *p1, void *p2, void *p3){
 
     while (1) {
 
-        if (k_msgq_get(&rgb_q, &mrgb, K_FOREVER) == 0) {
-                set_color(mrgb);
+        if (k_msgq_get(&rgb_q, &mode, K_FOREVER) == 0) {
+                set_color(mode);
 
         } else{
             printk("Error: Reading message queue");
@@ -51,7 +51,7 @@ void my_thread_rgb(void *p1, void *p2, void *p3){
 }
 
 /* Set appropiate color */
-static void set_color(struct rgb_mode mrgb)
+static void set_color(uint32_t mode)
 {
     /* Primero apagamos todo */
     gpio_pin_set_dt(&rgb_blue, 0);
@@ -59,32 +59,29 @@ static void set_color(struct rgb_mode mrgb)
     gpio_pin_set_dt(&rgb_green, 0);
 
     /* Después encendemos el color deseado */
-    if (mrgb.mode == BLUE_LED) {
+    if (mode == BLUE_LED) {
         gpio_pin_set_dt(&rgb_blue, 1);
     }
-    else if (mrgb.mode == GREEN_LED) {
+    else if (mode == GREEN_LED) {
         gpio_pin_set_dt(&rgb_green, 1);
     }
-    else if (mrgb.mode == RED_LED) {
+    else if (mode == RED_LED) {
         gpio_pin_set_dt(&rgb_red, 1);
     }
-    else if (mrgb.mode == YELLOW_LED) {
+    else if (mode == YELLOW_LED) {
         gpio_pin_set_dt(&rgb_red, 1);
         gpio_pin_set_dt(&rgb_green, 1);
 
-    } else if (mrgb.mode == PURPLE_LED) {
+    } else if (mode == PURPLE_LED) {
         gpio_pin_set_dt(&rgb_red, 1);
         gpio_pin_set_dt(&rgb_blue, 1);
     }
-    else if (mrgb.mode == CIAN_LED) {
+    else if (mode == CIAN_LED) {
         gpio_pin_set_dt(&rgb_blue, 1);
         gpio_pin_set_dt(&rgb_green, 1);
     } 
 }
 
-    
-
-/* Crear el thread */
 
 /* Crear el thread */
 K_THREAD_DEFINE(
