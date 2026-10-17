@@ -7,7 +7,7 @@
 #include "button.h"
 
 /* Variables */
-static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_ALIAS(userbt1), gpios);
+static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_ALIAS(userbt), gpios);
 
 /* Button Callback */
 static struct gpio_callback button_cb_data;
