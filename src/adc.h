@@ -1,6 +1,6 @@
 #ifndef ADC_H
 #define ADC_H
-
+#include <stdbool.h>
 #include <stdint.h>
 
 struct adc_m {
@@ -9,4 +9,6 @@ struct adc_m {
 };
 
 extern struct k_msgq adc_q;
+void set_state_adc(bool pause);
+
 #endif

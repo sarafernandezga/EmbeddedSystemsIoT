@@ -38,7 +38,7 @@ static void debounce_handler(struct k_timer *timer)
 
 
      if (pin_state < 0){  // Error de lectura
-        printk("BUTTON: failed reading state");
+        printk("Error: failed reading button state");
         return;
 
     } else if (pin_state == 0) {  // Botón soltado
@@ -70,7 +70,7 @@ static void long_pulse_handler(struct k_timer *timer)
         state->long_press_detected = true;
 
     } else { // Error de lectura
-        printk("BUTTON: failed reading state");
+        printk("Error: failed reading button state");
         return;
     }
 

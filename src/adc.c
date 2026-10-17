@@ -1,5 +1,6 @@
 #include "adc.h"
 
+#include <stdbool.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/adc.h>
 #include <zephyr/sys/printk.h>
@@ -12,6 +13,10 @@ static const struct adc_dt_spec adc_ch =
     ADC_DT_SPEC_GET_BY_IDX(ADC_NODE, 0);
 
 static int16_t sample;
+static int percentage;
+
+K_SEM_DEFINE(sem_adc_gate, 0, 1);
+static volatile bool pause_mode = false;
 
 /* Message Queue */
 K_MSGQ_DEFINE_TYPE(adc_q, struct adc_m , 1);
@@ -45,9 +50,8 @@ static int take_measurement(struct adc_sequence *sequence){
 
     if (ret == 0) {
 
-        int percentage = 100 - ((int)sample * 100 / 4095);
+        percentage = 100 - ((int)sample * 100 / 4095);
 
-        // calculamos todo en madc (despues del percentage para que no de error de compilacion)
         struct adc_m madc = {
             .raw = (int)sample,
             .percentage = percentage
@@ -63,9 +67,28 @@ static int take_measurement(struct adc_sequence *sequence){
     return ret;
 }
 
+void set_state_adc(bool pause)
+{
+    // If the user uses this function to pause it activates the pause_mode
+    // and if it uses to set it false it also activates the semaphore so it 
+    // gets wake
+    if (pause) {
+        pause_mode = true; 
+    } else {
+        if (pause_mode){ // THis check is to make sure the pause_mode it was enabled
+            pause_mode = false;
+            k_sem_give(&sem_adc_gate); // It wakes up the thread
+        }
+    }
+}
+
 /* Thread ADC */
 void my_thread_adc(void *p1, void *p2, void *p3)
 {
+    ARG_UNUSED(p1);
+    ARG_UNUSED(p2);
+    ARG_UNUSED(p3);
+
     int ret;
 
     struct adc_sequence sequence = {
@@ -79,9 +102,15 @@ void my_thread_adc(void *p1, void *p2, void *p3)
 
     while (1) {
 
-        ret = take_measurement(&sequence);
+        if (pause_mode){
+            printk("Pause mode");
+            // Wait for the semaphore to open
+            k_sem_take(&sem_adc_gate, K_FOREVER); 
+        }
 
+        ret = take_measurement(&sequence);
         k_sleep(K_SECONDS(2));
+
     }
 }
 

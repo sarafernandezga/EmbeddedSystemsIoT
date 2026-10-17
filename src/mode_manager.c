@@ -11,7 +11,11 @@
 #define RANGE_HIGH 66
 
 void my_thread_manager(void *p1, void *p2, void *p3)
-{
+{ 
+    ARG_UNUSED(p1);
+    ARG_UNUSED(p2);
+    ARG_UNUSED(p3);   
+    
     uint32_t led_mode;
     struct adc_m madc;
     uint16_t mbut;
@@ -22,7 +26,7 @@ void my_thread_manager(void *p1, void *p2, void *p3)
     while (1) {
 
         /* Esperar hasta 50 ms por un evento del botón */
-        ret = k_msgq_get(&but_q, &mbut, K_MSEC(5));
+        ret = k_msgq_get(&but_q, &mbut, K_MSEC(50));
 
         /* Procesar únicamente si hemos recibido un evento */
         if (ret == 0) {
@@ -33,6 +37,8 @@ void my_thread_manager(void *p1, void *p2, void *p3)
                 if (mbut == SHORT_PRESS) {
                     event = BLUE;
 
+                    set_state_adc(true); // Suspends the ADC thread
+
                     led_mode = BLUE_LED;
                     k_msgq_put(&rgb_q, &led_mode, K_NO_WAIT);
 
@@ -40,6 +46,8 @@ void my_thread_manager(void *p1, void *p2, void *p3)
 
                 } else if (mbut == LONG_PRESS) {
                     event = OFF;
+                    
+                    set_state_adc(true); // It also suspends the thread
 
                     led_mode = OFF_LED;
                     k_msgq_put(&rgb_q, &led_mode, K_NO_WAIT);
@@ -51,11 +59,16 @@ void my_thread_manager(void *p1, void *p2, void *p3)
             case BLUE:
                 if (mbut == SHORT_PRESS) {
                     k_msgq_purge(&adc_q);
+
+                    set_state_adc(false); // The thread wakes
+
                     event = NORMAL;
                     printk("System NORMAL\n");
 
                 } else if (mbut == LONG_PRESS) {
                     event = OFF;
+
+                    set_state_adc(true); // We make sure it is suspended
 
                     led_mode = OFF_LED;
                     k_msgq_put(&rgb_q, &led_mode, K_NO_WAIT);
@@ -67,6 +80,9 @@ void my_thread_manager(void *p1, void *p2, void *p3)
             case OFF:
                 if (mbut == SHORT_PRESS) {
                     k_msgq_purge(&adc_q);
+
+                    set_state_adc(false);
+
                     event = NORMAL;
                     printk("System NORMAL\n");
                 }

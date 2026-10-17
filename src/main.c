@@ -13,9 +13,7 @@ int main(void)
 	
     printk("    Board LED toggle (single thread: main)   \n");
 
-
-
-    // Inicializamos el botón
+    // Initialization of the button
     int ret = init_button();
 
     if (ret != 0) {
