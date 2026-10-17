@@ -20,6 +20,7 @@ int main(void)
 
     // Inicializamos el botón
     int ret = init_button();
+
     if (ret != 0) {
         printk("Error al inicializar el boton: %d\n", ret);
         return ret;
@@ -27,8 +28,18 @@ int main(void)
 
     while (1) {
         k_sleep(K_SECONDS(3));
-                
-        k_msgq_get(&adc_q, &madc, K_FOREVER);
-         printk("ADC: raw = %d / percentage = %d %%\n", madc.raw, madc.percentage);
+        
+        uint16_t mbut;
+        k_msgq_get(&but_q, &mbut, K_FOREVER);
+
+        if (mbut == SHORT_PRESS){
+            printk("Pulsacion corta \n");
+        } else if (mbut == LONG_PRESS){
+            printk("Pulsacion larga\n");
+        } else{
+            printk("Error: Pulsacion");
+        }
+
+         //printk("ADC: raw = %d / percentage = %d %%\n", madc.raw, madc.percentage);
     }
 }
