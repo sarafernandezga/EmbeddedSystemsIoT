@@ -19,12 +19,12 @@ static void set_color(uint32_t mode);
 static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
 {
     if (!device_is_ready(pin_rgb->port)) {
-        printk("Error: LED device not ready\n");
+        printk("RGB: LED device not ready\n");
         return -1;
     }
 
     if (gpio_pin_configure_dt(pin_rgb, GPIO_OUTPUT_INACTIVE) < 0) {
-        printk("Error: configuring LED\n");
+        printk("RGB: error configuring LED\n");
         return -1;
     }
 

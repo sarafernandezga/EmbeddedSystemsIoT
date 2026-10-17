@@ -10,6 +10,7 @@ target_sources(app PRIVATE
     src/adc.c
     src/rgb.c
     src/button.c
+    src/mode_manager.c
 )
 
 target_include_directories(app PRIVATE)

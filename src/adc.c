@@ -21,19 +21,19 @@ static int initialize_adc(struct adc_sequence *sequence)
     int ret;
 
     if (!adc_is_ready_dt(&adc_ch)) {
-        printk("ADC: dispositivo no preparado\n");
+        printk("ADC: device not prepared\n");
         return -ENODEV;
     }
 
     ret = adc_channel_setup_dt(&adc_ch);
     if (ret < 0) {
-        printk("ADC: error de configuracion: %d\n", ret);
+        printk("ADC: configuratio error: %d\n", ret);
         return ret;
     }
 
     ret = adc_sequence_init_dt(&adc_ch, sequence);
     if (ret < 0) {
-        printk("ADC: error inicializando secuencia: %d\n", ret);
+        printk("ADC: error initializing secuence: %d\n", ret);
         return ret;
     }
 
@@ -81,12 +81,12 @@ void my_thread_adc(void *p1, void *p2, void *p3)
 
         ret = take_measurement(&sequence);
 
-        k_msleep(2000);
+        k_sleep(K_SECONDS(2));
     }
 }
 
 
-/* Start leds thread */
+/* Start adc thread */
 K_THREAD_DEFINE(
     my_thread_adc_id,  /* Identificador */
     1024,              /* Stack size */
