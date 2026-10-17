@@ -27,6 +27,8 @@
         rgbgreen = &rgb_green;
         rgbblue = &rgb_blue;
 
+        userbt1 = &user_button_1; //sw0 
+
 	};
 };
 

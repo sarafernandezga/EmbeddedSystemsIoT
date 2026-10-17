@@ -43,14 +43,15 @@ static int initialize_adc(struct adc_sequence *sequence)
 static int take_measurement(struct adc_sequence *sequence){
     int ret = adc_read_dt(&adc_ch, sequence);
 
-    struct adc_m madc = {
-        .raw = (int)sample,
-        .percentage = percentage
-    };
-
     if (ret == 0) {
 
         int percentage = 100 - ((int)sample * 100 / 4095);
+
+        // calculamos todo en madc (despues del percentage para que no de error de compilacion)
+        struct adc_m madc = {
+            .raw = (int)sample,
+            .percentage = percentage
+        };
 
         k_msgq_put(&adc_q, &madc, K_NO_WAIT);
         

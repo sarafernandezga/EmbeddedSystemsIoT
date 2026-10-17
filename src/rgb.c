@@ -41,6 +41,8 @@ void my_thread_rgb(void *p1, void *p2, void *p3){
 
     while (1) {
 
+        /* K_FOREVER suspends the thread indefinitely until a message arrives, saving CPU cycles. */
+        /* Using K_NO_WAIT would cause a continuous loop */
         if (k_msgq_get(&rgb_q, &mode, K_FOREVER) == 0) {
                 set_color(mode);
 

@@ -9,6 +9,7 @@ target_sources(app PRIVATE
     src/main.c
     src/adc.c
     src/rgb.c
+    src/button.c
 )
 
 target_include_directories(app PRIVATE)
