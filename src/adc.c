@@ -103,7 +103,7 @@ void my_thread_adc(void *p1, void *p2, void *p3)
     while (1) {
 
         if (pause_mode){
-            printk("Pause mode");
+            printk("Pause mode\n");
             // Wait for the semaphore to open
             k_sem_take(&sem_adc_gate, K_FOREVER); 
         }

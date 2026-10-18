@@ -192,11 +192,11 @@ The button module detects button presses and distinguishes between short and lon
 
 **Devicetree Overlay Configuration**
 
-The button is accessed through the `userbt1` alias, which is defined in the Devicetree configuration:
+The button is accessed through the `userbt2` alias, which is defined in the Devicetree configuration:
 
 ```dts
 aliases {
-    userbt1 = &user_button_1;
+    userbt1 = &user_button_2;
 };
 ```
 
@@ -204,7 +204,7 @@ In `button.c`, the following definition retrieves the button's GPIO configuratio
 
 ```c
 static const struct gpio_dt_spec button =
-    GPIO_DT_SPEC_GET(DT_ALIAS(userbt1), gpios);
+    GPIO_DT_SPEC_GET(DT_ALIAS(userbt), gpios);
 ```
 
 This allows the module to access the button's GPIO port and pin using the Devicetree configuration, without hardcoding the hardware details in the C code.
