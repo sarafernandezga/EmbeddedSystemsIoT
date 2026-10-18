@@ -17,4 +17,6 @@ extern struct k_msgq adc_q;
 /* Semaphore ID */
 extern struct k_sem sem_adc_gate;
 
+void set_state_adc(bool pause);
+
 #endif

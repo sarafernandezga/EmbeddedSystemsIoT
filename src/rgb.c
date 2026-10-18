@@ -5,7 +5,7 @@
 #include <zephyr/sys/printk.h>
 
 /* Message Queue */
-K_MSGQ_DEFINE_TYPE(rgb_q, sizeof(uint32_t), 1);
+K_MSGQ_DEFINE(rgb_q, sizeof(enum rgb_modes), 1, 4);
 
 /* Leds Variables */
 static const struct gpio_dt_spec rgb_blue = GPIO_DT_SPEC_GET(DT_ALIAS(rgbblue), gpios);
@@ -13,7 +13,7 @@ static const struct gpio_dt_spec rgb_red = GPIO_DT_SPEC_GET(DT_ALIAS(rgbred), gp
 static const struct gpio_dt_spec rgb_green = GPIO_DT_SPEC_GET(DT_ALIAS(rgbgreen), gpios);
 
 /* Functions */
-static void set_color(uint32_t mode);
+static void set_color(enum rgb_modes mode);
 
 /* Initialize leds */
 static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
@@ -33,28 +33,32 @@ static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
 
 /* Thread leds */
 void my_thread_rgb(void *p1, void *p2, void *p3){
-    static uint32_t mode;
+    static enum rgb_modes mode;
 
     /* Inicializa los tres pines del RGB */
-    initialize_RGB(&rgb_blue);
-    initialize_RGB(&rgb_red);
-    initialize_RGB(&rgb_green);
+    if (initialize_RGB(&rgb_blue) != 0 ||
+        initialize_RGB(&rgb_red) != 0 ||
+        initialize_RGB(&rgb_green) != 0) 
+    {
+        printk("RGB: Initialization failed\n");
+        return;
+    }
 
     while (1) {
 
         /* K_FOREVER suspends the thread indefinitely until a message arrives, saving CPU cycles. */
         /* Using K_NO_WAIT would cause a continuous loop */
         if (k_msgq_get(&rgb_q, &mode, K_FOREVER) == 0) {
-                set_color(mode);
-
+            set_color(mode);
         } else{
-            printk("Error: Reading message queue");
+            printk("RGB: Reading message queue");
         }
+
     }
 }
 
 /* Set appropiate color */
-static void set_color(uint32_t mode)
+static void set_color(enum rgb_modes mode)
 {
     /* Primero apagamos todo */
     gpio_pin_set_dt(&rgb_blue, 0);
@@ -62,27 +66,48 @@ static void set_color(uint32_t mode)
     gpio_pin_set_dt(&rgb_green, 0);
 
     /* Después encendemos el color deseado */
-    if (mode == BLUE_LED) {             // Azul
-        gpio_pin_set_dt(&rgb_blue, 1);
-    }
-    else if (mode == GREEN_LED) {       // Verde
-        gpio_pin_set_dt(&rgb_green, 1);
-    }
-    else if (mode == RED_LED) {         // Rojo
-        gpio_pin_set_dt(&rgb_red, 1);
-    }
-    else if (mode == YELLOW_LED) {      // Amarillo
-        gpio_pin_set_dt(&rgb_red, 1);
-        gpio_pin_set_dt(&rgb_green, 1);
+    switch (mode) {
+        case OFF_LED:
+            break;
 
-    } else if (mode == PURPLE_LED) {    // Morado
-        gpio_pin_set_dt(&rgb_red, 1);
-        gpio_pin_set_dt(&rgb_blue, 1);
+        case RED_LED:
+            gpio_pin_set_dt(&rgb_red, 1);
+            break;
+
+        case GREEN_LED:
+            gpio_pin_set_dt(&rgb_green, 1);
+            break;
+
+        case BLUE_LED:
+            gpio_pin_set_dt(&rgb_blue, 1);
+            break;
+
+        case YELLOW_LED:
+            gpio_pin_set_dt(&rgb_green, 1);
+            gpio_pin_set_dt(&rgb_red, 1);
+            break;
+
+        case PURPLE_LED:
+            gpio_pin_set_dt(&rgb_red, 1);
+            gpio_pin_set_dt(&rgb_blue, 1);
+            break;
+
+        case CIAN_LED:
+            gpio_pin_set_dt(&rgb_blue, 1);
+            gpio_pin_set_dt(&rgb_green, 1);
+            break;
+
+        case WHITE_LED:
+            gpio_pin_set_dt(&rgb_red, 1);
+            gpio_pin_set_dt(&rgb_blue, 1);
+            gpio_pin_set_dt(&rgb_green, 1);
+            break;
+        
+        default:
+            printk("RGB: Invalid color mode\n");
+            break;
     }
-    else if (mode == CIAN_LED) {        // Cian
-        gpio_pin_set_dt(&rgb_blue, 1);
-        gpio_pin_set_dt(&rgb_green, 1);
-    } 
+
 }
 
 
