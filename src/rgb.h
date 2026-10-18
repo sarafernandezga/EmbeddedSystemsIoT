@@ -13,7 +13,6 @@
 #define PURPLE_LED    0x05
 #define CIAN_LED      0X06
 
-
 /* Message variable */
 extern struct k_msgq rgb_q;
 

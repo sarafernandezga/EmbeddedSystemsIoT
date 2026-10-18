@@ -35,6 +35,7 @@ static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
 void my_thread_rgb(void *p1, void *p2, void *p3){
     static uint32_t mode;
 
+    /* Inicializa los tres pines del RGB */
     initialize_RGB(&rgb_blue);
     initialize_RGB(&rgb_red);
     initialize_RGB(&rgb_green);
@@ -61,31 +62,31 @@ static void set_color(uint32_t mode)
     gpio_pin_set_dt(&rgb_green, 0);
 
     /* Después encendemos el color deseado */
-    if (mode == BLUE_LED) {
+    if (mode == BLUE_LED) {             // Azul
         gpio_pin_set_dt(&rgb_blue, 1);
     }
-    else if (mode == GREEN_LED) {
+    else if (mode == GREEN_LED) {       // Verde
         gpio_pin_set_dt(&rgb_green, 1);
     }
-    else if (mode == RED_LED) {
+    else if (mode == RED_LED) {         // Rojo
         gpio_pin_set_dt(&rgb_red, 1);
     }
-    else if (mode == YELLOW_LED) {
+    else if (mode == YELLOW_LED) {      // Amarillo
         gpio_pin_set_dt(&rgb_red, 1);
         gpio_pin_set_dt(&rgb_green, 1);
 
-    } else if (mode == PURPLE_LED) {
+    } else if (mode == PURPLE_LED) {    // Morado
         gpio_pin_set_dt(&rgb_red, 1);
         gpio_pin_set_dt(&rgb_blue, 1);
     }
-    else if (mode == CIAN_LED) {
+    else if (mode == CIAN_LED) {        // Cian
         gpio_pin_set_dt(&rgb_blue, 1);
         gpio_pin_set_dt(&rgb_green, 1);
     } 
 }
 
 
-/* Crear el thread */
+/* Defining thread */
 K_THREAD_DEFINE(
     rgb_led_thread_id,  /* Identificador */
     1024,               /* Stack */

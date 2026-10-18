@@ -13,12 +13,4 @@ int main(void)
 	
     printk("    Board LED toggle (single thread: main)   \n");
 
-    // Initialization of the button
-    int ret = init_button();
-
-    if (ret != 0) {
-        printk("Error al inicializar el boton: %d\n", ret);
-        return ret;
-    }
-
 }
