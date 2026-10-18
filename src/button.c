@@ -23,8 +23,8 @@ enum button_event {
 };
 
 /* Message Queues */
-K_MSGQ_DEFINE_TYPE(button_evt_q, sizeof(enum button_event), 1);
-K_MSGQ_DEFINE_TYPE(but_q, sizeof(enum button_mode), 1);
+K_MSGQ_DEFINE_TYPE(button_evt_q, enum button_event, 1);
+K_MSGQ_DEFINE_TYPE(but_q, enum button_mode, 1);
 
 /* Long Press Timer */
 static void long_pulse_handler(struct k_timer *timer);
@@ -36,7 +36,7 @@ static void long_pulse_handler(struct k_timer *timer)
 {
     ARG_UNUSED(timer);
 
-    /* Informamos que se ha ejecutado una pulsacion larga */
+    /* Sends an event when the long press timer expires */
     enum button_event evt = LONG_PRESS_EXPIRED;
     k_msgq_put(&button_evt_q, &evt, K_NO_WAIT);
 }
@@ -50,7 +50,7 @@ static void button_isr(const struct device *port,
     ARG_UNUSED(cb);
     ARG_UNUSED(pins);
 
-    /* Informamos que se ha producido un cambio en el boton */
+   /* Notifies the thread when the button state changes */
     enum button_event evt = BUTTON_EVENT;
     k_msgq_put(&button_evt_q, &evt, K_NO_WAIT);
     
@@ -58,13 +58,13 @@ static void button_isr(const struct device *port,
 
 /* Initialize button */
 int init_button(void){
-
+    /* Check if the GPIO device is ready */
     if (!gpio_is_ready_dt(&button)) {
         printk("BUTTON: Error initializing GPIO\n");
         return -ENODEV;
     }
 
-    /* Configure as input */
+    /* Configure the button as input */
     int ret = gpio_pin_configure_dt(&button, GPIO_INPUT);
 
     if (ret != 0){
@@ -72,7 +72,7 @@ int init_button(void){
         return ret;
     }
 
-    /* Register Callback */
+    /* Register the GPIO callback */
     gpio_init_callback(&button_cb_data, button_isr, BIT(button.pin));
 
     ret = gpio_add_callback(button.port, &button_cb_data);
@@ -82,7 +82,7 @@ int init_button(void){
         return ret;
     }
 
-    /* Interrupt on both edges */
+    /* Enable interrupts on both button edges */
     ret = gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_BOTH);  //en vez de edge to activate both, asi devuelve o 0 o 1
     
     if (ret != 0){
@@ -93,6 +93,7 @@ int init_button(void){
     return ret;
 }
 
+/* Button Thread */
 void my_thread_but(void *p1, void *p2, void *p3)
 {
     ARG_UNUSED(p1);
@@ -119,38 +120,38 @@ void my_thread_but(void *p1, void *p2, void *p3)
 
         if (ret == 0){
             switch (mevt) {
-                case BUTTON_EVENT:                // Button event
-                    /* Arrancar el antirrebote */
+                case BUTTON_EVENT: 
+                    /* Read the current button state */
                     pin_state = gpio_pin_get_dt(&button);
 
                     if (pin_state < 0){
                         printk("BUTTON: Error reading GPIO\n");
 
-                    } else if (pin_state == 1) {            // Sigue pulsado
-                        /* Inicia el timer de pulsacion larga */
+                    } else if (pin_state == 1) {
+                         /* Start the long press timer when pressed */
                         k_timer_start(&long_timer, K_SECONDS(1), K_NO_WAIT);
 
-                    } else {                               // Soltado
-                        /* Para el timer de pulsacion larga */
+                    } else { 
+                        /* Stop the timer when the button is released */
                         k_timer_stop(&long_timer);
 
-                        /* Si no se ha producido pulsacion larga */
+                        /* Send a short press if no long press occurred */
                         if (long_set == 0){
-                            /* Se manda una pulsacion corta */
                             mbut = SHORT_PRESS;
                             k_msgq_put(&but_q, &mbut, K_NO_WAIT);
                         } 
 
-                        /* Se reinicializa la variable de pulsacion larga */
+                        /* Reset the long press flag */
                         long_set = 0;
                     } 
                     
                     break;
 
-                case LONG_PRESS_EXPIRED:        // Long press
-                        long_set = 1;
-                        mbut = LONG_PRESS;
-                        k_msgq_put(&but_q, &mbut, K_NO_WAIT);
+                case LONG_PRESS_EXPIRED: 
+                    /* Register and send a long press event */
+                    long_set = 1;
+                    mbut = LONG_PRESS;
+                    k_msgq_put(&but_q, &mbut, K_NO_WAIT);
 
                     break;
             }
@@ -158,14 +159,13 @@ void my_thread_but(void *p1, void *p2, void *p3)
     }
 }
 
-
-
+/* Start Button Thread */
 K_THREAD_DEFINE(
-    my_thread_but_id,  /* Identificador */
+    my_thread_but_id,  /* Thread identifier */
     1024,              /* Stack size */
-    my_thread_but,  /* Funcion de entrada */
-    NULL, NULL, NULL,  /* Parametros */
-    4,                 /* Prioridad */
-    0,                 /* Opciones */
-    0                  /* Retardo de inicio */
+    my_thread_but,     /* Entry function */
+    NULL, NULL, NULL,  /* Parameters */
+    4,                 /* Priority */
+    0,                 /* Options */
+    0                  /* Start delay */
 );

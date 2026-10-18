@@ -21,40 +21,49 @@ static volatile bool pause_mode = false;
 /* Message Queue */
 K_MSGQ_DEFINE_TYPE(adc_q, struct adc_m , 1);
 
+/* ADC timer callback */
 static void adc_timer_handler(struct k_timer *timer)
 {
     ARG_UNUSED(timer);
+
+    /* Wakes up ADC thread to take a measurement */
     k_sem_give(&sem_adc_gate);
 }
 
 K_TIMER_DEFINE(adc_timer, adc_timer_handler, NULL);
 
+/* ADC Initialization */
 static int initialize_adc(struct adc_sequence *sequence)
 {
     int ret;
 
+    /* Check if the ADC device is ready */
     if (!adc_is_ready_dt(&adc_ch)) {
         printk("ADC: device not prepared\n");
         return -ENODEV;
     }
 
+    /* Configure the ADC channel */
     ret = adc_channel_setup_dt(&adc_ch);
     if (ret < 0) {
-        printk("ADC: configuratio error: %d\n", ret);
+        printk("ADC: configuration error: %d\n", ret);
         return ret;
     }
 
+    /* Initialize the ADC sequence */
     ret = adc_sequence_init_dt(&adc_ch, sequence);
     if (ret < 0) {
-        printk("ADC: error initializing secuence: %d\n", ret);
+        printk("ADC: error initializing sequence: %d\n", ret);
         return ret;
     }
 
     return ret;
 }
 
-
+/* ADC Measurement */
+/* Reads the ADC value and sends the result to the message queue */
 static int take_measurement(struct adc_sequence *sequence){
+    /* Take raw measurement from ADC */
     int ret = adc_read_dt(&adc_ch, sequence);
 
     if (ret != 0) {
@@ -62,35 +71,43 @@ static int take_measurement(struct adc_sequence *sequence){
         return ret;
     }
 
+    /* Ignore the measurement if the ADC is paused */
     if (pause_mode){
         return 0;
     }
 
+    /* Convert the ADC value to a percentage */
     percentage = 100 - ((int)sample * 100 / 4095);
 
+    /* Update ADC message */
     struct adc_m madc = {
         .raw = (int)sample,
         .percentage = percentage
     };
-
+    
+    /* Send the measurement to the message queue */
     k_msgq_put(&adc_q, &madc, K_NO_WAIT);
 
     return ret;
 }
 
+/* ADC Pause Control */
 void set_state_adc(bool pause)
 {
-    // If the user uses this function to pause it activates the pause_mode
-    // and if it uses to set it false it also activates the semaphore so it 
-    // gets wake
 
-    if (pause) {
+    if (pause) {                 // Activate pause mode
         pause_mode = true;
+
+        /* Stop measurement timer */
         k_timer_stop(&adc_timer);
-    } else {
-        pause_mode = false;
+
+    } else {                    // Resume measurementes 
+        pause_mode = false;     
+
+        /* Take a measure and restart timer */
         k_sem_give(&sem_adc_gate);
         k_timer_start(&adc_timer, K_SECONDS(2), K_SECONDS(2));
+
     }
 }
 
@@ -103,11 +120,13 @@ void my_thread_adc(void *p1, void *p2, void *p3)
 
     int ret;
 
+     /* Variables */
     struct adc_sequence sequence = {
         .buffer = &sample,
         .buffer_size = sizeof(sample),
     };
 
+    /* Initialize ADC */
     ret = initialize_adc(&sequence);
 
     if (ret < 0) {
@@ -115,27 +134,28 @@ void my_thread_adc(void *p1, void *p2, void *p3)
         return;
     }
 
+    /* Takes an initial measure */
+    set_state_adc(false);
+
     while (1) {
 
+        /* Wait for a measurement request */
         k_sem_take(&sem_adc_gate, K_FOREVER);
 
         if (!pause_mode) {
             take_measurement(&sequence);
         }
 
-        
-        
     }
 }
 
-
-/* Start adc thread */
+/* Start ADC thread */
 K_THREAD_DEFINE(
-    my_thread_adc_id,  /* Identificador */
+    my_thread_adc_id,  /* Thread identifier */
     1024,              /* Stack size */
-    my_thread_adc,  /* Funcion de entrada */
-    NULL, NULL, NULL,  /* Parametros */
-    4,                 /* Prioridad */
-    0,                 /* Opciones */
-    0                  /* Retardo de inicio */
+    my_thread_adc,     /* Entry function */
+    NULL, NULL, NULL,  /* Parameters */
+    4,                 /* Priority */
+    0,                 /* Options */
+    0                  /* Start delay */
 );

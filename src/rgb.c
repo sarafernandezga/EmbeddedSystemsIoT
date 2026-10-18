@@ -15,7 +15,7 @@ static const struct gpio_dt_spec rgb_green = GPIO_DT_SPEC_GET(DT_ALIAS(rgbgreen)
 /* Functions */
 static void set_color(enum rgb_modes mode);
 
-/* Initialize leds */
+/* Initialize LEDs */
 static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
 {
     if (!device_is_ready(pin_rgb->port)) {
@@ -23,6 +23,7 @@ static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
         return -1;
     }
 
+    /* Configure the LED pin as output, initially inactive */
     if (gpio_pin_configure_dt(pin_rgb, GPIO_OUTPUT_INACTIVE) < 0) {
         printk("RGB: error configuring LED\n");
         return -1;
@@ -35,7 +36,7 @@ static int initialize_RGB(const struct gpio_dt_spec *pin_rgb)
 void my_thread_rgb(void *p1, void *p2, void *p3){
     static enum rgb_modes mode;
 
-    /* Inicializa los tres pines del RGB */
+    /* Initialize the three RGB pins */
     if (initialize_RGB(&rgb_blue) != 0 ||
         initialize_RGB(&rgb_red) != 0 ||
         initialize_RGB(&rgb_green) != 0) 
@@ -46,10 +47,10 @@ void my_thread_rgb(void *p1, void *p2, void *p3){
 
     while (1) {
 
-        /* K_FOREVER suspends the thread indefinitely until a message arrives, saving CPU cycles. */
-        /* Using K_NO_WAIT would cause a continuous loop */
+         /* Wait for a message */
         if (k_msgq_get(&rgb_q, &mode, K_FOREVER) == 0) {
             set_color(mode);
+
         } else{
             printk("RGB: Reading message queue");
         }
@@ -57,15 +58,15 @@ void my_thread_rgb(void *p1, void *p2, void *p3){
     }
 }
 
-/* Set appropiate color */
+/* Set the selected color */
 static void set_color(enum rgb_modes mode)
 {
-    /* Primero apagamos todo */
+    /* Turn off all LEDs before selecting the new color */
     gpio_pin_set_dt(&rgb_blue, 0);
     gpio_pin_set_dt(&rgb_red, 0);
     gpio_pin_set_dt(&rgb_green, 0);
 
-    /* Después encendemos el color deseado */
+    /* Turn on the LEDs required for the selected color */
     switch (mode) {
         case OFF_LED:
             break;
@@ -110,14 +111,13 @@ static void set_color(enum rgb_modes mode)
 
 }
 
-
-/* Defining thread */
+/* Start RGB Thread */
 K_THREAD_DEFINE(
-    rgb_led_thread_id,  /* Identificador */
-    1024,               /* Stack */
-    my_thread_rgb,      /* Función de entrada: nombre correcto */
-    NULL, NULL, NULL,   /* Parámetros */
-    5,                  /* Prioridad */
-    0,                  /* Opciones */
-    0                   /* Retardo de inicio */
+    rgb_led_thread_id,  /* Thread identifier */
+    1024,               /* Stack size */
+    my_thread_rgb,      /* Entry function */
+    NULL, NULL, NULL,   /* Parameters */
+    5,                  /* Priority */
+    0,                  /* Options */
+    0                   /* Start delay */
 );

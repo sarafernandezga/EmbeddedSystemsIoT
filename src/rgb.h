@@ -16,7 +16,7 @@ enum rgb_modes {
     WHITE_LED
 };
 
-/* Message variable */
+/* Message Queue ID */
 extern struct k_msgq rgb_q;
 
 #endif
