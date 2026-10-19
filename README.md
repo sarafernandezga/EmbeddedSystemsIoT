@@ -1,5 +1,10 @@
 # Hands On Lab — Ambient Light Monitoring System
 
+### Versions
+
+- **Version 1 (`v1.0.0`):** Fully functional implementation of the ambient light monitoring system.
+- **Version 2 (`v2.0.0`):** Includes improvements aimed at optimizing microcontroller efficiency and resource management.
+
 ## 1. Project Overview
 
 This project implements an ambient light monitoring system using **Zephyr RTOS**. The system reads light intensity through an ADC and controls an RGB LED according to the measured brightness.
@@ -157,9 +162,9 @@ If any initialization step fails, the function prints an error message and retur
 
 **Thread Architecture**
 
-The module defines the `my_thread_adc()` thread using `K_THREAD_DEFINE()`. The thread initializes the ADC sequence and waits for measurement requests using `k_sem_take()` on `sem_adc_gate`.
+The module defines the `my_thread_adc()` thread using `K_THREAD_DEFINE()`. After initializing the ADC sequence, the thread waits for measurement requests using `k_sem_take()` on `sem_adc_gate`.
 
-A Zephyr timer, defined with `K_TIMER_DEFINE()`, triggers measurements every two seconds. Its callback releases the semaphore, allowing the ADC thread to perform the next measurement. This avoids continuous polling while keeping the measurement interval controlled by the timer.
+A Zephyr timer, defined with `K_TIMER_DEFINE()`, triggers measurement requests every two seconds. Its callback releases the binary semaphore, allowing the ADC thread to perform the next measurement. This avoids continuous polling while keeping the measurement interval controlled by the timer.
 
 **Message Queue**
 
@@ -176,7 +181,7 @@ The measurement is sent to the queue using `k_msgq_put()` with `K_NO_WAIT`, allo
 
 The `take_measurement()` function reads the ADC using `adc_read_dt()`, storing the result in the `sample` variable.
 
-If the conversion succeeds and the ADC is not paused, the function calculates the light percentage using the following formula:
+After a successful conversion, the function calculates the light percentage using the following formula:
 
 ```c
 percentage = 100 - ((int)sample * 100 / 4095);
@@ -190,7 +195,9 @@ The raw value and calculated percentage are stored in an `adc_m` structure and s
 
 **Pause and Resume Control**
 
-The `set_state_adc()` function controls whether measurements are paused. When pause mode is activated, the timer is stopped and measurements are not sent to the queue. When pause mode is disabled, the function releases the semaphore to request an immediate measurement and restarts the timer with a two-second interval.
+The `set_state_adc()` function controls the measurement timer. When measurements are paused, the timer is stopped, preventing further periodic measurement requests. When measurements resume, the function releases the semaphore to request an immediate measurement and restarts the timer with a two-second interval.
+
+The ADC thread remains blocked on the semaphore while waiting for measurement requests, minimizing unnecessary CPU activity between measurements.
 
 ### 5.3. Button Input Module (`button.c` / `button.h`)
 

@@ -16,7 +16,6 @@ static int16_t sample;
 static int percentage;
 
 K_SEM_DEFINE(sem_adc_gate, 0, 1);
-static volatile bool pause_mode = false;
 
 /* Message Queue */
 K_MSGQ_DEFINE_TYPE(adc_q, struct adc_m , 1);
@@ -71,11 +70,6 @@ static int take_measurement(struct adc_sequence *sequence){
         return ret;
     }
 
-    /* Ignore the measurement if the ADC is paused */
-    if (pause_mode){
-        return 0;
-    }
-
     /* Convert the ADC value to a percentage */
     percentage = 100 - ((int)sample * 100 / 4095);
 
@@ -96,14 +90,10 @@ void set_state_adc(bool pause)
 {
 
     if (pause) {                 // Activate pause mode
-        pause_mode = true;
-
         /* Stop measurement timer */
         k_timer_stop(&adc_timer);
 
-    } else {                    // Resume measurementes 
-        pause_mode = false;     
-
+    } else {                    // Resume measurementes  
         /* Take a measure and restart timer */
         k_sem_give(&sem_adc_gate);
         k_timer_start(&adc_timer, K_SECONDS(2), K_SECONDS(2));
@@ -134,17 +124,13 @@ void my_thread_adc(void *p1, void *p2, void *p3)
         return;
     }
 
-    /* Takes an initial measure */
+    /* Initialize measures */
     set_state_adc(false);
 
     while (1) {
-
         /* Wait for a measurement request */
         k_sem_take(&sem_adc_gate, K_FOREVER);
-
-        if (!pause_mode) {
-            take_measurement(&sequence);
-        }
+        take_measurement(&sequence);
 
     }
 }
