@@ -91,6 +91,7 @@ void set_state_adc(bool pause)
 
     if (pause) {                 // Activate pause mode
         /* Stop measurement timer */
+        printk("ADC paused\n");
         k_timer_stop(&adc_timer);
 
     } else {                    // Resume measurementes  

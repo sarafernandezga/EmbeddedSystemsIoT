@@ -329,3 +329,71 @@ The mode manager communicates with the button, ADC, and RGB modules through thei
 This message-based architecture allows the modules to operate independently while the manager coordinates their behavior.
 
 When the system transitions back to `NORMAL`, the manager calls `k_msgq_purge(&adc_q)` to remove pending ADC measurements. This helps prevent older readings from being processed immediately after the mode changes.
+
+## 7. Visual Studio Code Configuration
+
+The project includes a `.vscode` directory with configuration files for building, flashing, monitoring and debugging the firmware on the **NUCLEO-WL55JC** board.
+
+### 7.1 Configuration Files
+
+| File | Description |
+|---|---|
+| `launch.json` | Configures Cortex-Debug and GDB for debugging the firmware. |
+| `settings.json` | Defines the Windows terminal environment variables and Cortex-Debug settings. |
+| `tasks.json` | Defines build, flash, serial monitor, cleanup and debug server tasks. |
+
+### 7.2 Requirements
+
+The following tools are required to use the provided VS Code tasks:
+
+- Visual Studio Code.
+- The Cortex-Debug extension.
+- The Zephyr SDK, including the ARM toolchain and GDB.
+- A Zephyr workspace with the `west` tool installed in its Python virtual environment.
+- STM32CubeProgrammer for flashing the firmware.
+- PuTTY's `plink.exe` for serial communication.
+
+### 7.3 Environment Configuration
+
+Some paths are defined through environment variables to make the configuration easier to adapt to different development environments.
+
+| Variable | Purpose |
+|---|---|
+| `ZEPHYR_SDK_INSTALL_DIR` | Zephyr SDK installation directory. |
+| `ZEPHYR_BASE` | Zephyr development environment path, as expected by the project tasks. |
+| `ZEPHYR_DIR` | Path used to identify the Zephyr source directory. |
+| `PROJECT_DIR` | Root directory of the application project. |
+
+The STM32CubeProgrammer and PuTTY executables are referenced through their installation paths in `tasks.json`. If these tools are installed elsewhere, their paths must be updated accordingly.
+
+The `${workspaceFolder}` variable is provided by VS Code and refers to the root directory of the opened project.
+
+### 7.4 Available Tasks
+
+The following tasks are available from **Terminal → Run Task** in Visual Studio Code:
+
+| Task | Description |
+|---|---|
+| `West Build (auto)` | Builds the firmware for the `nucleo_wl55jc` board. |
+| `Flash (CubeProgrammer, UR+HWrst)` | Flashes the generated HEX firmware using STM32CubeProgrammer. |
+| `List COM Ports` | Lists available Windows serial ports. |
+| `Serial Monitor` | Opens a serial connection at 115200 baud. |
+| `Clean Build` | Removes the build directory. |
+| `Clean Cache` | Removes the project-specific Zephyr cache directory. |
+| `Zephyr: Debug Server` | Starts the Zephyr debug server after building the firmware. |
+| `Zephyr: Stop Debug Server` | Stops the OpenOCD debug server process. |
+
+### 7.5 Build and Debug Workflow
+
+1. Open the project root directory in Visual Studio Code.
+2. Check that the Zephyr environment and tool paths are configured correctly.
+3. Run **West Build (auto)** to compile the firmware.
+4. Run **Flash (CubeProgrammer, UR+HWrst)** to program the board.
+5. Open **Serial Monitor** to view serial output.
+6. Start the **Debug Zephyr - NUCLEO-WL55JC** launch configuration to debug the application.
+
+The debug configuration uses the generated ELF file at `build/zephyr/zephyr.elf` and connects to the GDB server on port `3333`.
+
+### 7.6 Generated Files
+
+The `build/` directory and `.zephyr-cache/` directory contain generated build artifacts and cache data. They should generally not be committed to the repository.
